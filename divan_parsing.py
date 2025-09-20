@@ -78,23 +78,29 @@ class DivanParser:
 
         for product in products:
             try:
-                # название (динамическая проверка)
+                # название (сначала itemprop, потом fallback)
                 try:
                     name = product.find_element(By.CSS_SELECTOR, "span[itemprop='name']").text
                 except NoSuchElementException:
                     try:
                         name = product.find_element(By.CSS_SELECTOR, "a[data-testid='product-title']").text
                     except NoSuchElementException:
-                        name = "Без названия"
+                        try:
+                            name = product.find_element(By.CSS_SELECTOR, ".PJZwc").text
+                        except NoSuchElementException:
+                            name = "Без названия"
 
-                # цена (проверяем разные варианты)
+                # цена (сначала data-testid, потом itemprop, потом class)
                 try:
                     price = product.find_element(By.CSS_SELECTOR, "span[data-testid='price']").text
                 except NoSuchElementException:
                     try:
                         price = product.find_element(By.CSS_SELECTOR, "meta[itemprop='price']").get_attribute("content")
                     except NoSuchElementException:
-                        price = "Не указана"
+                        try:
+                            price = product.find_element(By.CSS_SELECTOR, ".ui-LD-ZU.TA0JV").text
+                        except NoSuchElementException:
+                            price = "Не указана"
 
                 # ссылка
                 try:
@@ -106,7 +112,9 @@ class DivanParser:
                 self.logger.info(f"Сохранил товар: {name} — {price}")
 
             except Exception as e:
-                self.logger.warning(f"Не удалось распарсить товар. Ошибка: {e}\nHTML:\n{product.get_attribute('outerHTML')}")
+                self.logger.warning(
+                    f"Не удалось распарсить товар. Ошибка: {e}\nHTML:\n{product.get_attribute('outerHTML')}"
+                )
 
         self.logger.info(f"✅ Парсинг категории {category} завершён")
 
