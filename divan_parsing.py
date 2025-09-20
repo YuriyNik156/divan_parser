@@ -5,6 +5,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoSuchElementException
 
 
 class DivanParser:
@@ -34,8 +35,7 @@ class DivanParser:
         if headless:
             options.add_argument("--headless=new")
         options.add_argument("--disable-blink-features=AutomationControlled")
-        driver = webdriver.Chrome(options=options)
-        return driver
+        return webdriver.Chrome(options=options)
 
     def _init_db(self):
         conn = sqlite3.connect(self.db_name)
@@ -61,31 +61,36 @@ class DivanParser:
         self.driver.get(url)
 
         try:
-            WebDriverWait(self.driver, 10).until(
-                EC.presence_of_all_elements_located((By.CLASS_NAME, "_Ud0k"))
+            WebDriverWait(self.driver, 20).until(
+                EC.presence_of_all_elements_located(
+                    (By.CSS_SELECTOR, "div[data-testid='product-card']")
+                )
             )
         except Exception as e:
-            self.logger.error(f"Ошибка загрузки страницы: {e}")
+            self.logger.error(f"Ошибка загрузки страницы {url}: {e}")
             return
 
-        products = self.driver.find_elements(By.CLASS_NAME, "_Ud0k")
+        products = self.driver.find_elements(By.CSS_SELECTOR, "div[data-testid='product-card']")
 
         for product in products:
             try:
-                name = product.find_element(
-                    By.CSS_SELECTOR, "span[itemprop='name']"
-                ).text
-                price = product.find_element(
-                    By.CSS_SELECTOR, "span.ui-LD-ZU.KIkOH"
-                ).text
-                link = product.find_element(
-                    By.CSS_SELECTOR, "a.ui-GPFV8"
-                ).get_attribute("href")
+                # название (два варианта поиска)
+                try:
+                    name = product.find_element(By.CSS_SELECTOR, "span[itemprop='name']").text
+                except NoSuchElementException:
+                    name = product.find_element(By.CSS_SELECTOR, "a").text
+
+                # цена
+                price = product.find_element(By.CSS_SELECTOR, "span[data-testid='price']").text
+
+                # ссылка
+                link = product.find_element(By.TAG_NAME, "a").get_attribute("href")
 
                 self._save_to_db(name, price, link, category)
+                self.logger.info(f"Сохранил товар: {name} — {price}")
 
             except Exception as e:
-                self.logger.warning(f"Ошибка при парсинге товара: {e}")
+                self.logger.warning(f"Не удалось найти название. HTML:\n{product.get_attribute('outerHTML')}")
 
         self.logger.info(f"✅ Парсинг категории {category} завершён")
 
@@ -105,12 +110,13 @@ class DivanParser:
 
 
 if __name__ == "__main__":
-    parser = DivanParser()
+    parser = DivanParser(headless=True)
 
-    categories = ["svet", "divany-i-kresla", "stoly-i-stulya"]  # можно расширять список
+    try:
+        categories = ["svet", "divany-i-kresla", "stoly-i-stulya"]
 
-    for category in categories:
-        parser.parse_category(category)
-        sleep(2)  # пауза, чтобы сайт не забанил
-
-    parser.close()
+        for category in categories:
+            parser.parse_category(category)
+            sleep(2)  # пауза, чтобы сайт не забанил
+    finally:
+        parser.close()
