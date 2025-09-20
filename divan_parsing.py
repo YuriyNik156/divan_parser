@@ -38,6 +38,7 @@ class DivanParser:
         return webdriver.Chrome(options=options)
 
     def _init_db(self):
+        """Создание таблицы и очистка её перед новым парсингом."""
         conn = sqlite3.connect(self.db_name)
         cursor = conn.cursor()
         cursor.execute(
@@ -51,8 +52,11 @@ class DivanParser:
             )
             """
         )
+        # Очистка таблицы перед новым парсингом
+        cursor.execute("DELETE FROM products")
         conn.commit()
         conn.close()
+        self.logger.info("База данных очищена перед новым парсингом")
 
     def parse_category(self, category: str):
         url = self.BASE_URL + category
@@ -74,35 +78,35 @@ class DivanParser:
 
         for product in products:
             try:
-                # название: сначала ищем span[itemprop='name'], если нет — берём a[data-testid]
+                # название (динамическая проверка)
                 try:
-                    name = product.find_element(By.CSS_SELECTOR, "span[itemprop='name']").text.strip()
+                    name = product.find_element(By.CSS_SELECTOR, "span[itemprop='name']").text
                 except NoSuchElementException:
                     try:
-                        name = product.find_element(By.CSS_SELECTOR, "a[data-testid='product-title']").text.strip()
+                        name = product.find_element(By.CSS_SELECTOR, "a[data-testid='product-title']").text
                     except NoSuchElementException:
                         name = "Без названия"
 
-                # цена
+                # цена (проверяем разные варианты)
                 try:
-                    price = product.find_element(By.CSS_SELECTOR, "span[data-testid='price']").text.strip()
+                    price = product.find_element(By.CSS_SELECTOR, "span[data-testid='price']").text
                 except NoSuchElementException:
-                    price = "Не указана"
+                    try:
+                        price = product.find_element(By.CSS_SELECTOR, "meta[itemprop='price']").get_attribute("content")
+                    except NoSuchElementException:
+                        price = "Не указана"
 
                 # ссылка
                 try:
-                    link = product.find_element(By.CSS_SELECTOR, "a").get_attribute("href")
+                    link = product.find_element(By.TAG_NAME, "a").get_attribute("href")
                 except NoSuchElementException:
                     link = "Нет ссылки"
 
-                # сохраняем
                 self._save_to_db(name, price, link, category)
                 self.logger.info(f"Сохранил товар: {name} — {price}")
 
             except Exception as e:
-                self.logger.warning(
-                    f"Ошибка при парсинге товара: {e}\nHTML:\n{product.get_attribute('outerHTML')}"
-                )
+                self.logger.warning(f"Не удалось распарсить товар. Ошибка: {e}\nHTML:\n{product.get_attribute('outerHTML')}")
 
         self.logger.info(f"✅ Парсинг категории {category} завершён")
 
