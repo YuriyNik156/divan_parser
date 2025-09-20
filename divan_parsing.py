@@ -74,23 +74,35 @@ class DivanParser:
 
         for product in products:
             try:
-                # название (два варианта поиска)
+                # название: сначала ищем span[itemprop='name'], если нет — берём a[data-testid]
                 try:
-                    name = product.find_element(By.CSS_SELECTOR, "span[itemprop='name']").text
+                    name = product.find_element(By.CSS_SELECTOR, "span[itemprop='name']").text.strip()
                 except NoSuchElementException:
-                    name = product.find_element(By.CSS_SELECTOR, "a").text
+                    try:
+                        name = product.find_element(By.CSS_SELECTOR, "a[data-testid='product-title']").text.strip()
+                    except NoSuchElementException:
+                        name = "Без названия"
 
                 # цена
-                price = product.find_element(By.CSS_SELECTOR, "span[data-testid='price']").text
+                try:
+                    price = product.find_element(By.CSS_SELECTOR, "span[data-testid='price']").text.strip()
+                except NoSuchElementException:
+                    price = "Не указана"
 
                 # ссылка
-                link = product.find_element(By.TAG_NAME, "a").get_attribute("href")
+                try:
+                    link = product.find_element(By.CSS_SELECTOR, "a").get_attribute("href")
+                except NoSuchElementException:
+                    link = "Нет ссылки"
 
+                # сохраняем
                 self._save_to_db(name, price, link, category)
                 self.logger.info(f"Сохранил товар: {name} — {price}")
 
             except Exception as e:
-                self.logger.warning(f"Не удалось найти название. HTML:\n{product.get_attribute('outerHTML')}")
+                self.logger.warning(
+                    f"Ошибка при парсинге товара: {e}\nHTML:\n{product.get_attribute('outerHTML')}"
+                )
 
         self.logger.info(f"✅ Парсинг категории {category} завершён")
 
