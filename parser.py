@@ -1,5 +1,5 @@
 import logging
-import sqlite3
+import os
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -11,7 +11,7 @@ from exporters import CSVExporter, JSONExporter, SQLiteExporter
 
 class DivanParser:
     """
-    Парсер товаров с сайта divan.ru
+    Парсер товаров с сайта divan.ru.
     Собирает название, цену и ссылку на товар из указанной категории.
     Результаты сохраняются в выбранный формат (CSV / JSON / SQLite).
     """
@@ -29,6 +29,7 @@ class DivanParser:
         self.products = []  # список для хранения результатов
 
     def _setup_logging(self):
+        """Настройка логирования."""
         logging.basicConfig(
             level=logging.INFO,
             format="%(asctime)s - %(levelname)s - %(message)s",
@@ -36,6 +37,7 @@ class DivanParser:
         self.logger = logging.getLogger("DivanParser")
 
     def _init_driver(self, headless: bool):
+        """Инициализация Selenium WebDriver."""
         options = webdriver.ChromeOptions()
         if headless:
             options.add_argument("--headless=new")
@@ -43,6 +45,7 @@ class DivanParser:
         return webdriver.Chrome(options=options)
 
     def parse_category(self, category: str):
+        """Парсинг товаров указанной категории."""
         url = self.BASE_URL + category
         self.logger.info(f"Начинаю парсинг категории: {category} ({url})")
 
@@ -58,41 +61,53 @@ class DivanParser:
             self.logger.error(f"Ошибка загрузки страницы {url}: {e}")
             return
 
-        products = self.driver.find_elements(By.CSS_SELECTOR, "div[data-testid='product-card']")
+        products = self.driver.find_elements(
+            By.CSS_SELECTOR, "div[data-testid='product-card']"
+        )
 
         for product in products:
             try:
-                # название
+                # Название товара
                 try:
-                    name = product.find_element(By.CSS_SELECTOR, "span[itemprop='name']").text
+                    name = product.find_element(
+                        By.CSS_SELECTOR, "span[itemprop='name']"
+                    ).text
                 except NoSuchElementException:
                     try:
-                        name = product.find_element(By.CSS_SELECTOR, "a[data-testid='product-title']").text
+                        name = product.find_element(
+                            By.CSS_SELECTOR, "a[data-testid='product-title']"
+                        ).text
                     except NoSuchElementException:
                         try:
                             name = product.find_element(By.CSS_SELECTOR, ".PJZwc").text
                         except NoSuchElementException:
                             name = "Без названия"
 
-                # цена
+                # Цена
                 try:
-                    price = product.find_element(By.CSS_SELECTOR, "span[data-testid='price']").text
+                    price = product.find_element(
+                        By.CSS_SELECTOR, "span[data-testid='price']"
+                    ).text
                 except NoSuchElementException:
                     try:
-                        price = product.find_element(By.CSS_SELECTOR, "meta[itemprop='price']").get_attribute("content")
+                        price = product.find_element(
+                            By.CSS_SELECTOR, "meta[itemprop='price']"
+                        ).get_attribute("content")
                     except NoSuchElementException:
                         try:
-                            price = product.find_element(By.CSS_SELECTOR, ".ui-LD-ZU.TA0JV").text
+                            price = product.find_element(
+                                By.CSS_SELECTOR, ".ui-LD-ZU.TA0JV"
+                            ).text
                         except NoSuchElementException:
                             price = "Не указана"
 
-                # ссылка
+                # Ссылка
                 try:
                     link = product.find_element(By.TAG_NAME, "a").get_attribute("href")
                 except NoSuchElementException:
                     link = "Нет ссылки"
 
-                # сохраняем в список
+                # Сохраняем в список
                 self.products.append({
                     "name": name,
                     "price": price,
@@ -104,29 +119,47 @@ class DivanParser:
 
             except Exception as e:
                 self.logger.warning(
-                    f"Не удалось распарсить товар. Ошибка: {e}\nHTML:\n{product.get_attribute('outerHTML')}"
+                    f"Не удалось распарсить товар. Ошибка: {e}\n"
+                    f"HTML:\n{product.get_attribute('outerHTML')}"
                 )
 
         self.logger.info(f"✅ Парсинг категории {category} завершён")
 
-    def export_results(self):
-        """Сохраняем данные в выбранный формат"""
+    def export_results(self, output_path: str = None):
+        """
+        Сохраняем данные в выбранный формат.
+        :param output_path: Путь к файлу для сохранения. Если None, создаётся в examples/
+        """
         if not self.products:
             self.logger.warning("⚠ Нет данных для экспорта")
             return
 
-        if self.export_format == "csv":
-            exporter = CSVExporter("products.csv")
-        elif self.export_format == "json":
-            exporter = JSONExporter("products.json")
-        elif self.export_format == "sqlite":
-            exporter = SQLiteExporter("divan_products.db")
-        else:
+        exporters = {
+            "csv": CSVExporter,
+            "json": JSONExporter,
+            "sqlite": SQLiteExporter,
+        }
+
+        ExporterClass = exporters.get(self.export_format)
+        if not ExporterClass:
             raise ValueError("Неверный формат! Используй: csv / json / sqlite")
 
+        # Формируем путь по умолчанию, если не указан
+        if output_path is None:
+            output_path = os.path.join(
+                "examples", f"products.{self.export_format}"
+            )
+
+        # Создаём директорию, если её нет
+        output_dir = os.path.dirname(output_path)
+        if output_dir and not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+        exporter = ExporterClass(output_path)
         exporter.export(self.products)
-        self.logger.info(f"Данные экспортированы в {self.export_format.upper()}")
+        self.logger.info(f"Данные экспортированы в {self.export_format.upper()}: {output_path}")
 
     def close(self):
+        """Закрываем браузер."""
         self.driver.quit()
         self.logger.info("Закрыл браузер")

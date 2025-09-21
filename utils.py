@@ -3,17 +3,22 @@ import argparse
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.webdriver.remote.webelement import WebElement
+from typing import List
 
 
 # ====== ЛОГГЕР ======
 def get_logger(name: str = "DivanParser", level: int = logging.INFO) -> logging.Logger:
     """
-    Настройка логгера (замена print)
+    Настройка логгера (замена print).
     """
     logger = logging.getLogger(name)
     if not logger.handlers:  # чтобы не дублировались сообщения
         handler = logging.StreamHandler()
-        formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+        formatter = logging.Formatter(
+            "%(asctime)s - %(levelname)s - %(message)s"
+        )
         handler.setFormatter(formatter)
         logger.addHandler(handler)
         logger.setLevel(level)
@@ -21,18 +26,18 @@ def get_logger(name: str = "DivanParser", level: int = logging.INFO) -> logging.
 
 
 # ====== WebDriverWait ОБЁРТКИ ======
-def wait_for_element(driver, selector: str, timeout: int = 20):
+def wait_for_element(driver: WebDriver, selector: str, timeout: int = 20) -> WebElement:
     """
-    Ожидание появления одного элемента на странице
+    Ожидание появления одного элемента на странице.
     """
     return WebDriverWait(driver, timeout).until(
         EC.presence_of_element_located((By.CSS_SELECTOR, selector))
     )
 
 
-def wait_for_elements(driver, selector: str, timeout: int = 20):
+def wait_for_elements(driver: WebDriver, selector: str, timeout: int = 20) -> List[WebElement]:
     """
-    Ожидание появления списка элементов на странице
+    Ожидание появления списка элементов на странице.
     """
     return WebDriverWait(driver, timeout).until(
         EC.presence_of_all_elements_located((By.CSS_SELECTOR, selector))
@@ -42,7 +47,8 @@ def wait_for_elements(driver, selector: str, timeout: int = 20):
 # ====== ARGPARSE ======
 def parse_args():
     """
-    Парсинг аргументов командной строки
+    Парсинг аргументов командной строки.
+
     Пример:
         python parser.py --category sofas --format csv --headless
     """
