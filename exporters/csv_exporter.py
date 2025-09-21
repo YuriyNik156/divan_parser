@@ -13,7 +13,7 @@ class CSVExporter:
             return
 
         keys = data[0].keys()
-        with open(self.filename, "w", newline="", encoding="utf-8") as f:
+        with open(self.filename, "w", newline="", encoding="utf-8-sig") as f:
             writer = csv.DictWriter(f, fieldnames=keys, delimiter=";")
             writer.writeheader()
             writer.writerows(data)
