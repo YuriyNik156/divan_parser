@@ -101,10 +101,6 @@ name;price;link;category
 
 Основные библиотеки:
 * selenium — парсинг данных
-* sqlite3 — база данных
-* argparse — аргументы командной строки
-* logging — логирование
-* unittest — тесты
 
 Полный список зависимостей в requirements.txt.
 
