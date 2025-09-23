@@ -178,11 +178,12 @@ divan_parser/
 
 ## Скриншоты
 
-**Список товаров**
-![Список товаров](screenshots/Список.jpg)
+**Пример работы парсера**
+![Пример файла json.jpg](screenshots/%D0%9F%D1%80%D0%B8%D0%BC%D0%B5%D1%80%20%D1%84%D0%B0%D0%B9%D0%BB%D0%B0%20json.jpg)
 
-**Добавление товара**
-![Добавление товара](screenshots/Добавление.png)
+**Пример мок-страницы**
+![Пример файла json.jpg](screenshots/%D0%9F%D1%80%D0%B8%D0%BC%D0%B5%D1%80%20%D1%84%D0%B0%D0%B9%D0%BB%D0%B0%20json.jpg)
 
-**Админка**
-![Админка](screenshots/Админка.jpg)
+**Пример файла json**
+![Пример файла json.jpg](screenshots/%D0%9F%D1%80%D0%B8%D0%BC%D0%B5%D1%80%20%D1%84%D0%B0%D0%B9%D0%BB%D0%B0%20json.jpg)
+
