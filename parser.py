@@ -86,7 +86,7 @@ class DivanParser:
                 # Цена
                 try:
                     price = product.find_element(
-                        By.CSS_SELECTOR, "span[data-testid='price']"
+                        By.CLASS_NAME, "ui-LD-ZU KIkOH"
                     ).text
                 except NoSuchElementException:
                     try:
