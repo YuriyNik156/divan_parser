@@ -69,19 +69,19 @@ DivanParser — это учебный проект на Python для автом
 * Пример запуска с сохранением в .csv:
 
    ```bash
-   python divan_parsing.py --category svet divany-i-kresla stoly-i-stulya --format csv --headless
+   python sofa_parsing.py --category svet divany-i-kresla stoly-i-stulya --format csv --headless
    ```
   
 * Пример запуска с сохранением в .json:
 
    ```bash
-   python divan_parsing.py --category svet divany-i-kresla stoly-i-stulya --format json --headless
+   python sofa_parsing.py --category svet divany-i-kresla stoly-i-stulya --format json --headless
    ```
 
 * Пример запуска с сохранением в SQLite:
 
    ```bash
-   python divan_parsing.py --category svet divany-i-kresla stoly-i-stulya --format SQLite --headless
+   python sofa_parsing.py --category svet divany-i-kresla stoly-i-stulya --format SQLite --headless
    ```
 
 ---
@@ -125,8 +125,8 @@ name;price;link;category
 ## Структура проекта
 
 ```
-divan_parser/
-├── divan_parsing.py         # точка входа (основной скрипт)
+sofa-parser/
+├── sofa_parsing.py         # точка входа (основной скрипт)
 ├── parser.py                # класс DivanParser
 ├── database.py              # работа с SQLite
 ├── exporters/               # экспортеры данных
