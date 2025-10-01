@@ -51,7 +51,7 @@ DivanParser — это учебный проект на Python для автом
 1. **Клонировать репозиторий**:
 
    ```bash
-   git clone https://github.com/ваш_пользователь//divan_parser.git
+   git clone https://github.com/ваш_пользователь/divan_parser.git
    cd divan_parser
    ```
    
@@ -81,7 +81,7 @@ DivanParser — это учебный проект на Python для автом
 * Пример запуска с сохранением в SQLite:
 
    ```bash
-   python sofa_parsing.py --category svet divany-i-kresla stoly-i-stulya --format SQLite --headless
+   python sofa_parsing.py --category svet divany-i-kresla stoly-i-stulya --format sQLite --headless
    ```
 
 ---
